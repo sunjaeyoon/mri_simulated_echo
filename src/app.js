@@ -18,7 +18,7 @@ export default class Sketch{
     constructor(){
         // Scene, Camera, Renderer
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 1000 );
+        this.camera = new THREE.PerspectiveCamera( 70, (window.innerWidth/2) / window.innerHeight, 0.1, 1000 );
         this.camera.position.set(-2,2,-2);
         this.renderer = new THREE.WebGLRenderer({
             canvas: document.querySelector('#bg'),
@@ -210,8 +210,7 @@ export default class Sketch{
             var y = 0;
             var amplitude = 40;
             var frequency = 20;
-            //ctx.moveTo(x, y);
-            ctx.moveTo(x, 50);
+            ctx.moveTo(width/2, height/2);
             while (x < width) {
                 y = height/2 + amplitude * Math.sin((x+xOffset)/frequency);
                 ctx.lineTo(x, y);
@@ -221,8 +220,8 @@ export default class Sketch{
             ctx.stroke();
             ctx.save();
 
-            console.log("Drawing point at y=" + y);
-            drawPoint(ctx, y);
+            //console.log("Drawing point at y=" + y);
+            //drawPoint(ctx, y);
             ctx.stroke();
             ctx.restore();
         }
@@ -255,7 +254,7 @@ export default class Sketch{
             
             ctx.beginPath();
             
-            ctx.moveTo(ctx.width/2, ctx.height/2);
+            ctx.moveTo(ctx.width, ctx.height/2);
             // Hold x constant at 4 so the point only moves up and down.
             ctx.arc(4, y, radius, 0, 2 * Math.PI, false);
 
@@ -273,8 +272,7 @@ export default class Sketch{
             showAxes(context);
             context.save();            
             
-            //plotSine(context, this.time, 50);
-            //drawPoint(context, context.width/2 + Math.sin(this.time))
+            plotSine(context, this.time, 50);
             context.restore();
      
         }
