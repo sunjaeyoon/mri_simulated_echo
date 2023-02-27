@@ -25,7 +25,19 @@ export default class Sketch {
         });
         this.renderer.setSize(window.innerWidth / 2, window.innerHeight);
         this.time = 0;
+ 
+        // Global Variables 
+        // in createArrows()
+        this.arrows = [];
+        this.arrows_dir = [];
+        this.offset = [];
+        this.track_mag_x = [];
+        this.track_mag = [];
+        this.track_max = window.innerWidth / 2;
 
+        // UI parameters
+        this.VFA = false;
+        this.VFA_angle = 90;
         // Orbit Controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement)
         this.createGUI();
@@ -34,13 +46,9 @@ export default class Sketch {
         this.TESTER = document.getElementById('tester');
         this.createGraph();
 
-        // Global Variables 
-        // in createArrows()
-        this.arrows = [];
-        this.arrows_dir = [];
-        this.offset = [];
-        this.track_mag_x = [];
-        this.track_max = window.innerWidth / 2;
+
+
+
 
         // Add Objects
         //this.createMesh();
@@ -67,6 +75,7 @@ export default class Sketch {
         //console.log(this.arrows.dir);
         //console.log(this.arrows.position)
         let sum = 0;
+        let sum_mag = 0;
         this.arrows.forEach((element, index) => {
             //this.arrows_dir[index] 
             let angle = this.offset[index];
@@ -78,17 +87,25 @@ export default class Sketch {
             element.setDirection(new_pos);
             //console.log(e)
             sum += new_pos.x;
+            sum_mag += new_pos.z;
         })
         //console.log(Math.abs(sum)/11)
         // Update Tracker
         this.track_mag_x.unshift(sum);
         this.track_mag_x.length = Math.min(this.track_mag_x.length, this.track_max);
 
+        this.track_mag.unshift(Math.sqrt(sum_mag ** 2 + sum ** 2) / 360);
+        this.track_mag.length = Math.min(this.track_mag.length, this.track_max);
+
         //console.log(this.track_mag_x)
         if (this.time == 150 && this.time > 0) {
             this.refocusPulse();
         } else if (this.time % 300 == 150 && this.time > 0) {
-            this.refocusPulseVFA();
+            if (this.VFA === false) {
+                this.refocusPulse();
+            } else {
+                this.refocusPulseVFA();
+            }
         }
 
         this.render();
@@ -159,18 +176,18 @@ export default class Sketch {
     }
 
     updateGraph = () => {
-        function plotData(ctx, xOffset, yOffset, maximum, data) {
+        function plotData(ctx, xOffset, yOffset, maximum, data, color) {
             // Write
             ctx.font = "30px Arial";
-            ctx.fillText("Sum of Phase in X direction", 10,50);
-            
+            ctx.fillText("Sum of Phase in X direction", 10, 50);
+
             var width = ctx.canvas.width;
             var height = ctx.canvas.height;
             var scale = 20;
 
             ctx.beginPath();
             ctx.lineWidth = 2;
-            ctx.strokeStyle = "rgb(66,44,255)";
+            ctx.strokeStyle = color; //"rgb(66,44,255)";
 
             // console.log("Drawing point...");
             // drawPoint(ctx, yOffset+step);
@@ -181,8 +198,8 @@ export default class Sketch {
             var frequency = 20;
             ctx.moveTo(width / 2, height / 2);
             while (x < maximum) {
-                y = height / 2 + data[x]*100;
-                ctx.lineTo(-(x-width-4) / 2, y);
+                y = height / 2 + data[x] * 100;
+                ctx.lineTo(-(x - width - 4) / 2, y);
                 x++;
                 // console.log("x="+x+" y="+y);
             }
@@ -241,7 +258,8 @@ export default class Sketch {
             showAxes(context);
             context.save();
 
-            plotData(context, this.time, 50, this.track_max, this.track_mag_x);
+            plotData(context, this.time, 50, this.track_max, this.track_mag_x, "rgb(66,44,255)");
+            plotData(context, this.time, 50, this.track_max, this.track_mag, "rgb(255,0,0)");
             context.restore();
 
         }
@@ -286,7 +304,7 @@ export default class Sketch {
             function () {
                 //console.log(this.rotationMatrix('x', 90))
                 this.arrows.forEach((element, index) => {
-                    let angle = 90 * Math.PI / 180;
+                    let angle = this.VFA_angle * Math.PI / 180;
                     let current_pos = this.arrows_dir[index];
                     let rot_mat = this.rotationMatrix('x', angle);
 
@@ -306,6 +324,11 @@ export default class Sketch {
             };
 
         this.gui.add(this, 'testbutton').name('testbutton');
+
+        this.gui.add(this, 'VFA').name('VFA control').listen()
+        this.gui.add(this, 'VFA_angle', 0, 270).name('VFA Angle').listen()
+        
+
     }
 
     createMesh = () => {
@@ -371,7 +394,7 @@ export default class Sketch {
             const arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex);
             this.arrows.push(arrowHelper);
             this.arrows_dir.push(dir);
-            this.offset.push((index - Math.floor(total/2)) / 30000);
+            this.offset.push((index - Math.floor(total / 2)) / 10000);
             this.scene.add(arrowHelper);
         }
 
