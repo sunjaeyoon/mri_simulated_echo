@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import gsap from 'gsap';
 import { GUI } from 'dat.gui';
+import Plotly from 'plotly.js-dist';
 
 // SHADERS
 import vertex from './shaders/vertex.glsl';
@@ -22,12 +23,16 @@ export default class Sketch{
         this.renderer = new THREE.WebGLRenderer({
             canvas: document.querySelector('#bg'),
         });
-        this.renderer.setSize( window.innerWidth, window.innerHeight );
+        this.renderer.setSize( window.innerWidth/2, window.innerHeight );
         this.time = 0;
         
         // Orbit Controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement)
         this.createGUI();
+
+        // Plotly
+        this.TESTER = document.getElementById('tester');
+        this.createGraph();
 
         // Global Variables 
         // in createArrows()
@@ -48,7 +53,7 @@ export default class Sketch{
     onWindowResize = () =>{
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(window.innerWidth/2, window.innerHeight);
     };
 
     render = () =>{
@@ -79,6 +84,8 @@ export default class Sketch{
 
         this.render();  
         requestAnimationFrame( this.animate );
+        
+        this.updateGraph(); //Plotlyjs
     };
 
     // Manual Rotation Matrices
@@ -132,9 +139,152 @@ export default class Sketch{
         return new THREE.Vector3(resultX, resultY, resultZ);
     };
 
+    createGraph = () => {
+        /*
+        let layout = {
+
+            title:'Signal Intensity',
+            //margin: { t: 0 } 
+        };
+
+        let trace1 = {
+
+            x: [1, 2, 3, 4],
+          
+            y: [10, 15, 13, 17],
+          
+            mode: 'markers'
+          
+        };
+
+        var data = [trace1];
+        
+        Plotly.newPlot( this.TESTER, data, layout)
+
+        setInterval(function() {
+            Plotly.extendTraces('tester', { y: [[Math.random()]] }, [0]);
+        }
+          , 200);*/
+            
+        var canvas = document.getElementById('DemoCanvas');
+        canvas.style.width ='100%';
+        canvas.style.height='100%';
+        // ...then set the internal size to match
+        canvas.width  = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        //Always check for properties and methods, to make sure your code doesn't break in other browsers.
+        if (canvas.getContext) 
+        {
+            var context = canvas.getContext('2d');
+            // Reset the current path
+            context.beginPath(); 
+            // Staring point (10,45)
+            context.moveTo(0, canvas.height/2);
+            // End point (180,47)
+            context.lineTo(canvas.width, canvas.height/2);
+            // Make the line visible
+            context.stroke();
+        }
+
+
+    }
+
+    updateGraph = () => {
+
+        //const canvas = document.getElementById('DemoCanvas');;
+        //const ctx = canvas.getContext("2d");
+        function plotSine(ctx, xOffset, yOffset) {
+            var width = ctx.canvas.width;
+            var height = ctx.canvas.height;
+            var scale = 20;
+
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgb(66,44,255)";
+
+            // console.log("Drawing point...");
+            // drawPoint(ctx, yOffset+step);
+            
+            var x = 4;
+            var y = 0;
+            var amplitude = 40;
+            var frequency = 20;
+            //ctx.moveTo(x, y);
+            ctx.moveTo(x, 50);
+            while (x < width) {
+                y = height/2 + amplitude * Math.sin((x+xOffset)/frequency);
+                ctx.lineTo(x, y);
+                x++;
+                // console.log("x="+x+" y="+y);
+            }
+            ctx.stroke();
+            ctx.save();
+
+            console.log("Drawing point at y=" + y);
+            drawPoint(ctx, y);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function showAxes(ctx,axes) {
+            var width = ctx.canvas.width;
+            var height = ctx.canvas.height;
+            var xMin = 0;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = "rgb(128,128,128)";
+            
+            // X-Axis
+            ctx.moveTo(xMin, height/2);
+            ctx.lineTo(width, height/2);
+            
+            // Y-Axis
+            ctx.moveTo(width/2, 0);
+            ctx.lineTo(width/2, height);
+
+            // Starting line
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, height);
+            
+            ctx.stroke();
+        }
+
+        function drawPoint(ctx, y) {            
+            var radius = 3;
+            
+            ctx.beginPath();
+            
+            ctx.moveTo(ctx.width/2, ctx.height/2);
+            // Hold x constant at 4 so the point only moves up and down.
+            ctx.arc(4, y, radius, 0, 2 * Math.PI, false);
+
+            ctx.fillStyle = 'red';
+            ctx.fill();
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        
+        let canvas = document.getElementById('DemoCanvas');
+        if (canvas.getContext) {
+            let context = canvas.getContext("2d");
+        
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            showAxes(context);
+            context.save();            
+            
+            //plotSine(context, this.time, 50);
+            //drawPoint(context, context.width/2 + Math.sin(this.time))
+            context.restore();
+     
+        }
+
+    }
+
     createGUI = () => {
         // Reset Animation
         this.gui = new GUI();
+        this.gui.domElement.id = 'gui';
         this.resetAnimation = 
             () => {
                 this.arrows.forEach( (element,index) => {
@@ -180,9 +330,6 @@ export default class Sketch{
             };
 
         this.gui.add(this,'refocusPulseVFA').name('VFA RF Pulse');
-        //this.gui.add(sphere.rotation, 'x', -3, 3).onChange()
-        //this.gui.add(sphere.rotation, 'y', -3, 3).onChange()
-        //this.gui.add(sphere.rotation, 'z', -3, 3).onChange()
     }
 
     createMesh = () =>{
