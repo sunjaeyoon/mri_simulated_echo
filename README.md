@@ -16,4 +16,4 @@ Ubuntu nodejs install using apt starts with v10, you will need to somehow instal
 The node version used in this repository is v16.19.1 
 Check node version using 'node -v'
 
-![picture](https://github.com/sunjaeyoon/mri_simulated_echo/resources/demo.png)
+![picture](https://github.com/sunjaeyoon/mri_simulated_echo/blob/main/resources/demo.png)
